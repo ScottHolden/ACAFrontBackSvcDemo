@@ -1,18 +1,21 @@
 ﻿using Azure.Messaging.ServiceBus;
+using Azure.Core;
+using Azure.Identity;
 
-string? connectionString = Environment.GetEnvironmentVariable("servicebus");
-if (string.IsNullOrEmpty(connectionString))
-{
-	Console.Error.WriteLine("No connection string found in env var 'servicebus'");
-	return 1;
-}
+string sbNamespace = ReadEnvVar("sb-namespace");
+string queueName = ReadEnvVar("sb-queue");
 
 CancellationTokenSource cts = new();
 AppDomain.CurrentDomain.ProcessExit += (o, e) => cts.Cancel();
 
-ServiceBusClient sbc = new(connectionString);
+#if DEBUG
+TokenCredential credential = new DefaultAzureCredential();
+#else
+TokenCredential credential = new ManagedIdentityCredential();
+#endif
 
-ServiceBusReceiver reciever = sbc.CreateReceiver("service");
+ServiceBusClient sbc = new(sbNamespace, credential);
+ServiceBusReceiver reciever = sbc.CreateReceiver(queueName);
 
 while (!cts.Token.IsCancellationRequested)
 {
@@ -27,4 +30,10 @@ while (!cts.Token.IsCancellationRequested)
 	}
 }
 
-return 0;
+
+string ReadEnvVar(string name)
+{
+	string? val = Environment.GetEnvironmentVariable(name);
+	if (val == null || string.IsNullOrEmpty(val)) throw new Exception($"Env var '{name}' was not set!");
+	return val;
+}

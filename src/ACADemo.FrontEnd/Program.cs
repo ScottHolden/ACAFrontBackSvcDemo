@@ -11,4 +11,3 @@ app.MapGet("/tobackend", async () =>
 });
 
 app.Run();
-return 0;

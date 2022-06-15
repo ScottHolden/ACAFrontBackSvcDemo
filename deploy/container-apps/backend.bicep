@@ -77,7 +77,7 @@ resource containerApp 'Microsoft.App/containerApps@2022-03-01' = {
             }
             {
               name: 'sb-namespace'
-              value: servicebus.properties.serviceBusEndpoint
+              value: '${sbName}.servicebus.windows.net'
             }
           ]
           resources: {
